@@ -1,26 +1,26 @@
 /*
   Name: tcc built-in DEX-OS SDK
-  Copyright: 
+  Copyright:
   Author: Joseph Emmanuel DL Dayo
   Date: 12/04/04 05:38
   Description: A built-in C library for tcc aka "Tiny C Compiler".
   Compile in tcc using the -c option to create an object file and
   then link it with the main program.
-  
-  
+
+
 
     Copyright (C) 2004  Joseph Emmanuel Dayo
-    
+
     This library is free software; you can redistribute it and/or
     modify it under the terms of the GNU Library General Public
     License as published by the Free Software Foundation; either
     version 2 of the License, or (at your option) any later version.
-    
+
     This library is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
     Library General Public License for more details.
-    
+
     You should have received a copy of the GNU Library General Public
     License along with this library; if not, write to the Free
     Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -64,7 +64,7 @@ void getparameters(char *buf)
 void charputc(char c)
 {
   dexsdk_systemcall(6,c,0,0,0,0);
-};  
+};
 
 /*this strtok is still not thread safe, so be careful!*/
 char *strtok(char *s, const char *delim)
@@ -742,7 +742,7 @@ int vsprintf_help(unsigned c, void **ptr )
 *****************************************************************************/
 /**
  * FIXME
- */ 
+ */
 int vsprintf(char *buffer, const char *fmt, va_list args)
 {
         int ret_val;
@@ -804,7 +804,7 @@ void setx(int x)
 
 void sety(int y)
 {
-   dexsdk_systemcall(0x38,y,0,0,0,0); 
+   dexsdk_systemcall(0x38,y,0,0,0,0);
 };
 
 void textcolor(char val)
@@ -816,7 +816,7 @@ void textbackground(char val)
 {
    dexsdk_systemcall(14,val,0,0,0,0);
 };
-  
+
 void outc(char x)
 {
     dexsdk_systemcall(0x51,x,0,0,0,0);
@@ -1170,7 +1170,7 @@ int kb_deq(int *code)
   {
    return dexsdk_systemcall(1,(int)code,0,0,0,0);
   };
-  
+
 char getch()
  {
  int code,c;
@@ -1277,7 +1277,7 @@ char *gets(char *buf)
 
 char *fgets(char *s, int n, FILE* f)
 {
-    
+
     if (f==stdin)
     {
     int x;
@@ -1287,8 +1287,8 @@ char *fgets(char *s, int n, FILE* f)
     s[x+1]= 0;
     return s;
     };
-    
-    return (char*)dexsdk_systemcall(0x40,(int)s,n,(int)f,0,0); 
+
+    return (char*)dexsdk_systemcall(0x40,(int)s,n,(int)f,0,0);
 };
 
 int fread(const void *buf,int itemsize,int noitems,FILE* fhandle)
@@ -1300,7 +1300,7 @@ int fwrite(const void *buf,int itemsize,int noitems,FILE* fhandle)
  {
    return dexsdk_systemcall(0x45,(int)buf,itemsize,noitems,(int)fhandle,0);
  };
- 
+
 char fputc(char c,FILE *f)
   {
     if ( f ==  stdout || f == stderr) //stdout
@@ -1318,7 +1318,7 @@ fputs(const char *s, FILE *stream){
   }
 }
 
- 
+
 int fclose(FILE *stream)
 {
  if (stream==stdout) //stdout?
@@ -1416,7 +1416,7 @@ int time(){
     dexsdk_systemcall(0x55,0,0,0,0,0);
 }
 
-void get_date_time(dex32_datetime *datetime){ 
+void get_date_time(dex32_datetime *datetime){
     dexsdk_systemcall(0x53,(int)datetime,0,0,0,0);
 }
 
@@ -1441,14 +1441,13 @@ next = seed;
 
 /*Process control functions */
 int fork(){
-   return dexsdk_systemcall(0x90,0,0,0,0,0);   
+   return dexsdk_systemcall(0x90,0,0,0,0,0);
 }
 
 int exec(char *fname,unsigned short  mode, char *params){
-   return dexsdk_systemcall(0x5C,(int)fname,mode,(int)params,0,0);     
+   return dexsdk_systemcall(0x5C,(int)fname,mode,(int)params,0,0);
 }
 
 int execp(char *fname,unsigned short mode, char *params){
-   return dexsdk_systemcall(0x5B,(int)fname,mode,(int)params,0,0);     
+   return dexsdk_systemcall(0x5B,(int)fname,mode,(int)params,0,0);
 }
-

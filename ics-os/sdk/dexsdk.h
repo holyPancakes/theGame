@@ -1,12 +1,12 @@
 /*
   Name: dex-os tcc C library
-  Copyright: 
+  Copyright:
   Author: Joseph Emmanuel DL Dayo
   Date: 12/04/04 21:23
   Description: provides standard C functions to dex-os applications
   compiled using tcc. Some of the functions are based on DJGPP stdlib
   sources.
-  
+
     Copyright (C) 2004 Joseph Dayo
 
     This library is free software; you can redistribute it and/or
@@ -198,12 +198,12 @@ typedef void *va_list;
 #define va_end(ap)
 
 #define va_start(ap, last_arg) ((void)((ap) = \
-     (va_list)((char *)(&last_arg)+__dj_va_rounded_size(last_arg))))  
-     
+     (va_list)((char *)(&last_arg)+__dj_va_rounded_size(last_arg))))
+
 #define unconst(__v, __t) __extension__ ({union { const __t __cp; __t __p; } __q; __q.__cp = __v; __q.__p;})
-     
+
 void  clrscr();
-int do_printf(const char *fmt, va_list args, fnptr_t fn,FILE *f, void *ptr); 
+int do_printf(const char *fmt, va_list args, fnptr_t fn,FILE *f, void *ptr);
 void exit (int status);
 void free(void *ptr);
 int kb_deq(int *code);
@@ -270,4 +270,4 @@ void writepixel(int x, int y, char color);
 void read_palette(char *r, char *g, char *b, char index);
 void write_palette(char r, char g, char b, char index);
 
-#endif 
+#endif
