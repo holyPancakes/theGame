@@ -22,6 +22,9 @@
 #define NORMAL 5
 #define FAST 3
 
+#define CHARACTERPIXELSIZE 6400
+#define TILEPIZELSIZE 1600
+
 typedef struct monster{
 	char *name;
 	int hp;
@@ -48,6 +51,17 @@ typedef struct player{
 	int cash;
 }Player;
 
+typedef struct maptile{
+	int x;
+	int y;
+	int type;
+	boolean walkable;
+}Tile;
+
+typedef struct map{
+	Tile tiles[14][6];
+}Map;
+
 int mm = 1;//currently in main_menu;
 int bm1 = 0;//battle screen menu;
 int bm2 = 0;// ability screen menu;
@@ -57,6 +71,7 @@ int flip;
 char keypress;
 Monster jcarter,jackie,piggy,emo,lazertron,glucose,eboy,kekman;
 Player me;
+Map map1, map2;
 int alive = 1;
 
 void writeTextAnimation(char* text, int x, int y, int color, int maxWidth, int size);
@@ -224,6 +239,12 @@ Monster playerAttack(Player y, Monster x){
 	return x;
 }
 
+Tile initializeTile(int xPos, int yPos){
+	Tile newTile;
+	newTile.x=xPos;
+	newTile.y=yPos;
+}
+
 void encounterMonster(Player x, Monster y, int num){
 	alive++;
 	switch(num){
@@ -369,7 +390,7 @@ int main() {
 			}
 			write_text(">",30+x_menu*110,150+y_menu*20,WHITE,0);
 		}
-		
+
 	}while(keypress!='q');
 
 
@@ -390,7 +411,7 @@ void writeTextAnimation(char* text, int x, int y, int color, int maxWidth, int s
 		//if(i%maxWidth == (maxWidth-1)){
         //    write_text(">",45+maxWidth, 80 , WHITE, 0);
         //    getch();
-        //    clearArea(0,0,440,220);        
+        //    clearArea(0,0,440,220);
 		//}
 	}
 }
@@ -400,8 +421,10 @@ void playGame(){
 	//playIntro();
 	//writeTextAnimation("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", 20, 5, WHITE, 30, 0);
 	//Insert Intro here
+	//map1 here
 	drawBattleBox(me,piggy);
 	delay(10);
+	//map2 here
 	//credits();
 }
 
@@ -469,12 +492,12 @@ void playIntro(){
     clearArea(0,0,440,220);
     delay(NORMAL);
     writeTextAnimation(title,40,50,DARK_BLUE,28,1);
-    clearArea(0,0,440,220);   
+    clearArea(0,0,440,220);
 }
 
 void drawBattleBox(Player x, Monster y){
 	int i,j;
-	
+
 	x = initializeplayer();
 	y = initializepiggy();
 
@@ -490,7 +513,7 @@ void drawBattleBox(Player x, Monster y){
 			if(i == 145 || j == 1 || i == 199 || j == 218 || j == 319){
 				write_pixel(j,i,WHITE);
 			}
-			
+
 		}
 	}
 
@@ -505,4 +528,3 @@ void drawBattleBox(Player x, Monster y){
 	write_text("FIGHT",248,155,WHITE,0);
 	write_text("ITEM", 248,175,WHITE,0);
 }
-
