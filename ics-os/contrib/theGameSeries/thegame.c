@@ -32,6 +32,7 @@ typedef struct monster{
 	int agi;
 	int crt;
 	int cash;
+	char *message;
 }Monster;
 
 typedef struct player{
@@ -46,11 +47,13 @@ typedef struct player{
 	int agi;
 	int crt;
 	int cash;
+	int pot;
 }Player;
 
 int mm = 1;//currently in main_menu;
 int bm1 = 0;//battle screen menu;
 int bm2 = 0;// ability screen menu;
+int sm = 0;//shop screen menu;
 
 int row, col;
 int flip;
@@ -58,6 +61,7 @@ char keypress;
 Monster jcarter,jackie,piggy,emo,lazertron,glucose,eboy,kekman;
 Player me;
 int alive = 1;
+int boss_turn = 0;
 
 void writeTextAnimation(char* text, int x, int y, int color, int maxWidth, int size);
 void clearArea(int x, int y, int w, int h);
@@ -68,7 +72,8 @@ void quit();
 void menu();
 void playIntro();
 
-void drawBattleBox(Player x, Monster y);
+Player drawBattleBox(Player x, Monster y);
+void gameOver();
 
 Player initializeplayer();
 Player monsterAttack(Monster y, Player x);
@@ -77,6 +82,19 @@ Monster playerBash(Player y, Monster x);
 Monster playerCram(Player y, Monster x);
 Player playerExcessiveAbsence(Player y);
 Monster playerKek(Player y, Monster x);
+
+Player levelUp(Player x){
+	x.max_hp += 150;
+	x.max_mp += 80;
+	x.hp = x.max_hp;
+	x.mp = x.max_mp;
+	x.atk += 12;
+	x.mag += 8;
+	x.def += 9;
+	x.agi += 13;
+	x.crt += 3;
+	return x;
+}
 
 Monster initializejcarter(){
 	Monster x;
@@ -87,6 +105,7 @@ Monster initializejcarter(){
 	x.def = 23;
 	x.agi = 7;
 	x.crt = 3;
+	x.message = "Jay Carter boxes in!";
 	return x;
 }
 
@@ -100,6 +119,7 @@ Monster initializejackie(){
 	x.agi = 20;
 	x.crt = 7;
 	x.cash = 2000;
+	x.message = "You have been betrayed!";
 	return x;
 }
 
@@ -113,6 +133,7 @@ Monster initializepiggy(){
 	x.agi = 1;
 	x.crt = 0;
 	x.cash = 35;
+	x.message = "Piggy struts in!";
 	return x;
 }
 Monster initializeemo(){
@@ -125,6 +146,7 @@ Monster initializeemo(){
 	x.agi = 999;
 	x.crt = 999;
 	x.cash = 0;
+	x.message = ". . .";
 	return x;
 }
 Monster initializelazertron(){
@@ -137,6 +159,7 @@ Monster initializelazertron(){
 	x.agi = 7;
 	x.crt = 0;
 	x.cash = 70;
+	x.message = "Lazertron, tinkering about!";
 	return x;
 }
 Monster initializeglucose(){
@@ -149,6 +172,7 @@ Monster initializeglucose(){
 	x.agi = 5;
 	x.crt = 0;
 	x.cash = 100;
+	x.message = "You feel the sweet air!";
 	return x;
 }
 
@@ -162,6 +186,7 @@ Monster initializeeboy(){
 	x.agi = 1;
 	x.crt = 0;
 	x.cash = 0;
+	x.message = "You feel energized!";
 	return x;
 }
 Monster initializekekman(){
@@ -174,23 +199,79 @@ Monster initializekekman(){
 	x.agi = 6;
 	x.crt = 3;
 	x.cash = 1250;
+	x.message = "KEK!";
 	return x;
 }
 
 Player initializeplayer(){
 	Player x;
 	x.name = "You";
-	x.hp = 50;
-	x.mp = 40;
+	x.hp = 999;
+	x.max_hp = 999;
+	x.mp = 120;
+	x.max_mp = 120;
 	x.atk = 18;
 	x.mag = 15;
 	x.def = 12;
 	x.agi = 9;
 	x.crt = 0;
 	x.cash = 0;
+	x.pot = 1;
 	return x;
 }
 
+void updateStatusbar(char *message){
+	clearArea(15,15,300,20);
+	writeTextAnimation(message,15,15,WHITE,50,2);
+}
+
+Player openShop(Player x){
+	int yas = 1;
+	sm = 1;
+	keypress = 'a';
+	clearArea(0,0,440,220);
+	writeTextAnimation("BUY A POTION? -500G",15,15,WHITE,50,0);
+	write_text("YES",50,50,WHITE,0);
+	write_text("NO",50,60,WHITE,0);
+	write_text(">",40,50,WHITE,0);
+
+	while(sm == 1){
+		keypress = (char)getch();
+		if(keypress == down_key){
+			clearArea(40,50,6,6);
+			write_text(">",40,60,WHITE,0);
+			yas = 0;
+		}
+
+		if(keypress == up_key){
+			clearArea(40,60,6,6);
+			write_text(">",40,50,WHITE,0);
+			yas = 1;
+		}
+
+		if(keypress == back){
+			clearArea(40,50,6,6);
+			write_text(">",40,60,WHITE,0);
+			yas = 0;	
+		}
+
+		if(keypress == okay && yas == 1){
+			if(x.cash >= 500){
+				x.cash -= 500;
+				x.pot ++;
+				writeTextAnimation("You bought a potion",100,100,WHITE,30,0);
+				delay(SLOW*2);
+				clearArea(100,100,200,200);
+			}else{
+				writeTextAnimation("Cash not enough",100,100,WHITE,30,0);
+				delay(SLOW*2);
+				clearArea(100,100,200,200);
+			}
+		}else if(keypress == okay && yas == 0){
+			sm = 0;
+		}
+	}
+}
 
 Player monsterAttack(Monster y,Player x){
 	int dmg;
@@ -201,113 +282,135 @@ Player monsterAttack(Monster y,Player x){
 	}
 
 	x.hp -= dmg;
-	printf("%s dealt %d damage!\n", y.name,dmg);
+	updateStatusbar("Your opponent attacks!");
 	if(x.hp < 0){
 		x.hp = 0;
 	}
 	return x;
 }
 
-Monster playerAttack(Player y, Monster x){
-	int dmg;
-	dmg = y.atk - (x.def/3);
-
-	if(dmg <= 0){
-		dmg = 1;
-	}
-
-	x.hp -= dmg;
-	printf("%s dealt %d damage!\n", y.name,dmg);
-	if(x.hp < 0){
-		x.hp = 0;
-	}
-	return x;
-}
-
-void encounterMonster(Player x, Monster y, int num){
-	alive++;
+Player encounterMonster(Player x, Monster y, int num){
 	switch(num){
 		case 1: y = initializepiggy(); break;
 		case 2: y = initializelazertron(); break;
 		case 3: y = initializeglucose(); break;
 		case 4: y = initializekekman(); break;
-		default: y = initializepiggy();
+		default: return;
 	}
 
-	if(y.agi > x.agi){
-		x = monsterAttack(y,x);
-		if(x.hp == 0){
-			printf("Game over\n");
-			/*GameOver function*/
-			alive--;
-		}
-	}
-
-	while(1){
-		/*player choice*/
-		y = playerAttack(x,y);
-		if(y.hp == 0){
-			printf("yas!\n");
-			x.cash += y.cash;
-			break;
-		}
-		x = monsterAttack(y,x);
-		if(x.hp == 0){
-			printf("game over\n");
-			alive = 0;
-			break;
-		}
-	}
+	x = drawBattleBox(x,y);
+	return x;
 }
 
-void encounterEmo(Player x, Monster y){
-	printf("Emo kills self\n");
+Player encounterEmo(Player x, Monster y){
+	clearArea(0,0,440,220);
+	/*draw emo*/
+	writeTextAnimation(y.message,15,15,WHITE,30,0);
+	delay(SLOW*2);
+	clearArea(0,0,440,220);
+	writeTextAnimation("You recieve 1000 CASH!",15,15,WHITE,40,0);
+	clearArea(0,0,440,220);
 	x.cash += 1000;
+	return x;
 }
 
-void encounterEboy(Player x, Monster y){
-	/* Stuff */
-	printf("Eboy restores your MP!\n");
-	x.mp += 20;
-	if(x.mp < x.max_mp){
-		x.mp = x.max_mp;
-	}
+Player encounterEboy(Player x, Monster y){
+	clearArea(0,0,440,220);
+	/*draw emo*/
+	writeTextAnimation(y.message,15,15,WHITE,30,0);
+	delay(SLOW*2);
+	clearArea(0,0,440,220);
+	writeTextAnimation("MP FULLY REPLENISHED",15,15,WHITE,40,0);
+	clearArea(0,0,440,220);
+	x.mp = x.max_mp;
+	return x;
+}
+
+Player encounterJCarter(Player x, Monster y, Monster z){
+	y = initializejcarter();
+	z = initializejackie();
+
+	x = drawBattleBox(x,y);
+
+	x = openShop(x);
+
+	clearArea(0,0,440,220);
+	writeTextAnimation("The portal is near..,",30,30,WHITE,40,0);
+	delay(SLOW);
+	clearArea(0,0,440,220);
+	writeTextAnimation("But . . .",30,30,WHITE,40,0);
+	clearArea(0,0,440,220);
+	x = drawBattleBox(x,z);
+	return x;
 }
 
 /*Encounter Randomizer*/
 int encounterRoll(){
-	int randy = rand()%100 + 1;
+	int randy = rand() % 200 + 1;
 	return randy;
 }
 
 /*Monster Encounter*/
 void encountery(int x){
-	int num;
-	if(x >= 1 && x<= 35){
+	int num = 0;
+	if(x >= 1 && x<= 45){
 		num = 1;
 		encounterMonster(me,piggy,num);
-	}else if(x>40 && x<= 70){
+	}else if(x>45 && x<= 60){
 		num = 2;
 		encounterMonster(me,glucose,num);
-	}else if(x > 70 && x<= 90){
+	}else if(x > 60 && x<= 90){
 		num = 3;
 		encounterMonster(me,lazertron,num);
 	}else if(x > 90 && x<= 98){
 		encounterEmo(me,emo);
 	}else if(x > 35 && x<=40){
 		encounterEboy(me,eboy);
-	}else{
+	}else if (x == 100){
 		num = 4;
 		encounterMonster(me,kekman,num);
 	}
 }
 
-void gameOver(){
-	/*ayun*/
+
+Player playerPotion(Player x){
+	x.pot -= 1;
+	updateStatusbar("You recovered 50 HP!");
+	x.hp += 50;
+	if(x.hp > x.max_hp){
+		x.hp = x.max_hp;
+	}
+	return x;
 }
 
+void drawStatus(Player a, Monster b){
+	/*INTEGER TO STRING PLEASE*/
+	char str[10];
 
-int main() {
+	clearArea(69,120,40,20);
+	clearArea(219,125,40,17);
+	clearArea(226,285,7,7);
+
+	sprintf(str,"%d",a.hp);
+	write_text(str,69,120,WHITE,0);
+	write_text("/",92,120,WHITE,0);
+	sprintf(str,"%d",a.max_hp);
+	write_text(str,100,120,WHITE,0);
+
+	sprintf(str,"%d",a.mp);
+	write_text(str,69,129,WHITE,0);
+	write_text("/",92,129,WHITE,0);
+	sprintf(str,"%d",a.max_mp);
+	write_text(str,100,129,WHITE,0);
+
+	sprintf(str,"%d",b.hp);
+	write_text(str,219,125,WHITE,0);
+
+	sprintf(str,"%d",a.pot);
+	write_text(str,246,215,WHITE,0);
+}
+
+int main() {	
 	int x_menu=0,y_menu=0;
 	int i=0, textSpeed = NORMAL;
 	set_graphics(VGA_320X200X256);
@@ -396,13 +499,15 @@ void writeTextAnimation(char* text, int x, int y, int color, int maxWidth, int s
 }
 
 void playGame(){
+	int g;
 	clearArea(0,0,440,220);
 	//playIntro();
-	//writeTextAnimation("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.", 20, 5, WHITE, 30, 0);
-	//Insert Intro here
-	drawBattleBox(me,piggy);
-	delay(10);
-	//credits();
+	me = initializeplayer();
+	g = encounterRoll();
+	encountery(g);
+	delay(SLOW * 10);
+	me = encounterJCarter(me,jcarter,jackie);
+	credits();
 }
 
 void credits(){
@@ -413,20 +518,24 @@ void credits(){
 	writeTextAnimation("Created by:",30,45,WHITE,29,0);
 	writeTextAnimation("Maru Baul and Aron Vibar",30,55,WHITE,30,0);
 	clearArea(0,0,440,220);
-	keypress = 'q';
+	keypress = 'a';
+	mm = 1;
+	main();
 }
 
 void settings(){
 	//Insert Intro here
 	write_text("Z - Confirm",30,35,WHITE,1);
-	write_text("x - Back",30,55,WHITE,1);
+	write_text("X - Back",30,55,WHITE,1);
 	write_text("Arrow Keys - Movement",30,75,WHITE,1);
 	write_text("Q - Quit Game",30,95,WHITE,1);
 }
 
 void quit(){
 	clearArea(0,0,440,220);
-	write_text("Bye.",140,180,WHITE,1);
+	write_text("Bye.",140,100,WHITE,1);
+	delay(NORMAL);
+	clearArea(0,0,440,220);
 	keypress = 'q';
 }
 
@@ -472,16 +581,18 @@ void playIntro(){
     clearArea(0,0,440,220);   
 }
 
-void drawBattleBox(Player x, Monster y){
+Player drawBattleBox(Player x, Monster y){
 	int i,j;
-	
+	int num = 0;
+	int xmen;
+	int ymen;
 	x = initializeplayer();
-	y = initializepiggy();
+	bm1 = 1;
 
 	write_text(x.name,25,110,WHITE,0);
 	write_text("HP: ",40,120,WHITE,0); //HP VALUE AT 42  "/MAXHP" GOES AT +25
 	write_text("MP: ",40,131,WHITE,0); //SAME DITO
-
+	drawStatus(x,y);
 	write_text(y.name,175,110,WHITE,0);
 	write_text("HP: ",190,125,WHITE,0);
 
@@ -503,6 +614,283 @@ void drawBattleBox(Player x, Monster y){
 	}
 
 	write_text("FIGHT",248,155,WHITE,0);
-	write_text("ITEM", 248,175,WHITE,0);
+	write_text("POTION", 248,175,WHITE,0);
+	
+
+	write_text("BASH 3MP",20,155,WHITE,3);
+	write_text("EXAB 69MP",20,175,WHITE,3);
+	write_text("CRAM 50MP",110,155,WHITE,3);
+	write_text("KEK 100MP",110,175,WHITE,3);
+
+	updateStatusbar(y.message);
+
+	if(y.agi > x.agi){
+		x = monsterAttack(y,x);
+		delay(SLOW);
+	}
+
+	if(x.hp == 0){
+		updateStatusbar("YOU DIED");
+		delay(SLOW);
+		bm1 = 0;
+		gameOver();
+	}
+
+	while(1){
+		here:;
+		xmen = 0;
+		ymen = 0;
+		write_text(">",238,155,WHITE,0);
+		while(bm1 == 1){
+			keypress = (char)getch();
+			if(keypress == up_key){
+				clearArea(238,175,6,6);
+				write_text(">",238,155,WHITE,0);
+				num = 0;
+			}else if(keypress == down_key){
+				clearArea(238,155,6,6);
+				write_text(">",238,175,WHITE,0);
+				num = 1;
+			}else if(keypress == okay){
+				if(num == 0){
+					bm1 = 0;
+					bm2 = 1;	
+				}else{
+					if(x.pot <= 0){
+						updateStatusbar("NO POTIONS!");
+					}else{
+						x = playerPotion(x);
+						clearArea(238,175,6,6);
+						drawStatus(x,y);
+						keypress = 'a';
+						num = 0;
+						bm1 = 0;
+						goto next;
+					}
+				}
+				
+			}
+		}
+		write_text(">",10,155,WHITE,0);
+		while(bm2 == 1){
+			keypress = (char)getch();
+			if(keypress == up_key && xmen == 0){
+				clearArea(10,175,6,6);
+				clearArea(100,155,6,6);
+				clearArea(100,175,6,6);
+				write_text(">",10,155,WHITE,0);
+				ymen = 0;
+			}else if(keypress == up_key && xmen == 1){
+				clearArea(10,175,6,6);
+				clearArea(100,175,6,6);
+				clearArea(10,155,6,6);
+				write_text(">",100,155,WHITE,0);
+				ymen = 0;
+			}else if(keypress == down_key && xmen == 0){
+				clearArea(10,155,6,6);
+				clearArea(100,155,6,6);
+				clearArea(100,175,6,6);
+				write_text(">",10,175,WHITE,0);
+				ymen = 1;
+			}else if(keypress == down_key && xmen == 1){
+				clearArea(10,155,6,6);
+				clearArea(10,175,6,6);
+				clearArea(100,155,6,6);
+				write_text(">",100,175,WHITE,0);
+				ymen = 1;
+			}else if(keypress == left_key && ymen == 0){
+				clearArea(10,175,6,6);
+				clearArea(100,155,6,6);
+				clearArea(100,175,6,6);
+				write_text(">",10,155,WHITE,0);
+				xmen = 0;
+			}else if(keypress == left_key && ymen == 1){
+				clearArea(10,155,6,6);
+				clearArea(100,155,6,6);
+				clearArea(100,175,6,6);
+				write_text(">",10,175,WHITE,0);
+				xmen = 0;
+			}else if(keypress == right_key && ymen == 0){
+				clearArea(10,155,6,6);
+				clearArea(10,175,6,6);
+				clearArea(100,175,6,6);
+				write_text(">",100,155,WHITE,0);
+				xmen = 1;
+			}else if(keypress == right_key && ymen == 1){
+				clearArea(10,155,6,6);
+				clearArea(10,175,6,6);
+				clearArea(100,155,6,6);
+				write_text(">",100,175,WHITE,0);
+				xmen = 1;
+			}else if(keypress == okay){
+				if(xmen == 0 && ymen == 0){
+					y = playerBash(x,y);
+					updateStatusbar("You Used BASH!");
+					clearArea(238,155,6,6);
+					clearArea(10,155,6,6);
+					clearArea(10,175,6,6);
+					clearArea(100,155,6,6);
+					clearArea(100,175,6,6);
+					if(y.hp == 0){
+						drawStatus(x,y);
+						updateStatusbar("Your opponent died");
+						delay(NORMAL);
+						clearArea(0,0,440,220);
+						bm2 = 0;
+						keypress = 'a';
+						return x;
+					}
+					keypress = 'a';
+					bm2 = 0;
+				}else if(xmen == 1 && ymen == 0){
+					y = playerCram(x,y);
+					updateStatusbar("You Used CRAM!");
+					clearArea(238,155,6,6);
+					clearArea(10,155,6,6);
+					clearArea(10,175,6,6);
+					clearArea(100,155,6,6);
+					clearArea(100,175,6,6);
+					if(y.hp == 0){
+						drawStatus(x,y);
+						updateStatusbar("Your opponent died");
+						delay(NORMAL);
+						clearArea(0,0,440,220);
+						bm2 = 0;
+						keypress = 'a';
+						return x;
+					}
+					keypress = 'a';
+					bm2 = 0;
+				}else if(xmen == 0 && ymen == 1){
+					x = playerExcessiveAbsence(x);
+					updateStatusbar("You Recovered 50 percent HP!");
+					clearArea(238,155,6,6);
+					clearArea(10,155,6,6);
+					clearArea(10,175,6,6);
+					clearArea(100,155,6,6);
+					clearArea(100,175,6,6);
+					bm2 = 0;
+					keypress = 'a';
+				}else if(xmen == 1 && ymen == 1){
+					y = playerKek(x,y);
+					updateStatusbar("You Used KEK!");
+					clearArea(238,155,6,6);
+					clearArea(10,155,6,6);
+					clearArea(10,175,6,6);
+					clearArea(100,155,6,6);
+					clearArea(100,175,6,6);
+					if(y.hp == 0){
+						drawStatus(x,y);
+						updateStatusbar("Your opponent died");
+						delay(NORMAL);
+						clearArea(0,0,440,220);
+						bm2 = 0;
+						keypress = 'a';
+						return x;
+					}
+					keypress = 'a';
+					bm2 = 0;
+				}
+			}else if(keypress == back){
+				bm2 = 0;
+				clearArea(10,155,6,6);
+				clearArea(10,175,6,6);
+				clearArea(100,155,6,6);
+				clearArea(100,175,6,6);
+				bm1 = 1;
+				goto here;
+			}
+		}
+		drawStatus(x,y);
+		next:;
+		delay(SLOW*3);
+		x = monsterAttack(y,x);
+		if(x.hp == 0){
+			drawStatus(x,y);
+			updateStatusbar("YOU DIED");
+			gameOver();
+		}
+		bm1 = 1;
+		drawStatus(x,y);
+	}
+
+	
 }
 
+Monster playerBash(Player y, Monster x){
+	int dmg;
+	if(y.mp < 3){
+		updateStatusbar("Insufficient MP!");
+		return x;
+	}
+
+	dmg = (y.atk/2) + (y.mag/3) - (x.def/3);
+
+	if(dmg <= 0){
+		dmg = 1;
+	}
+
+	x.hp -= dmg;
+	if(x.hp < 0){
+		x.hp = 0;
+	}
+	return x;
+}
+
+Monster playerCram(Player y, Monster x){
+	int dmg;
+	if(y.mp < 15){
+		updateStatusbar("Insufficient MP!");
+		return x;
+	}
+	dmg = y.mag;
+	if(dmg <= 0){
+		dmg = 1;
+	}
+	x.hp -= dmg;
+	if(x.hp < 0){
+		x.hp = 0;
+	}
+	return x;
+}
+
+Player playerExcessiveAbsence(Player y){
+	if(y.mp < 20){
+		updateStatusbar("Insufficient MP!");
+		return y;
+	}
+
+	updateStatusbar("You Used EXCESSIVE ABSENCES!");
+	y.hp += (y.max_hp/2);
+	if(y.hp > y.max_hp){
+		y.hp = y.max_hp;
+	}
+	return y;
+}
+
+Monster playerKek(Player y, Monster x){
+	int dmg;
+	if(y.mp < 25){
+		updateStatusbar("Insufficient MP!");
+		return x;
+	}
+	dmg = y.mag + y.atk - (x.def/10);
+	if(dmg <= 0){
+		dmg = 1;
+	}
+	x.hp -= dmg;
+	if(x.hp < 0){
+		x.hp = 0;
+	}
+	return x;
+}
+
+void gameOver(){
+	clearArea(0,0,440,220);
+	writeTextAnimation("GAME OVER",150,150,WHITE,30,2);
+	mm = 1;
+	bm1 = 0;
+	bm2 = 0;
+	keypress = 'a';
+	main();
+}
