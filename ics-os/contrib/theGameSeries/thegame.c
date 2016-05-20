@@ -55,6 +55,8 @@ int bm1 = 0;//battle screen menu;
 int bm2 = 0;// ability screen menu;
 int sm = 0;//shop screen menu;
 
+int succ = 0; //successful skill
+
 int row, col;
 int flip;
 char keypress;
@@ -82,6 +84,17 @@ Monster playerBash(Player y, Monster x);
 Monster playerCram(Player y, Monster x);
 Player playerExcessiveAbsence(Player y);
 Monster playerKek(Player y, Monster x);
+
+Player manaDown(Player x, int cost){
+	x.mp -= cost;
+	succ = 0;
+	return x;
+}
+
+Player getCash(Player x, int rew){
+	x.cash += rew;
+	return x;
+}
 
 Player levelUp(Player x){
 	x.max_hp += 150;
@@ -210,67 +223,19 @@ Player initializeplayer(){
 	x.max_hp = 999;
 	x.mp = 120;
 	x.max_mp = 120;
-	x.atk = 18;
+	x.atk = 28;
 	x.mag = 15;
 	x.def = 12;
 	x.agi = 9;
 	x.crt = 0;
 	x.cash = 0;
-	x.pot = 1;
+	x.pot = 5;
 	return x;
 }
 
 void updateStatusbar(char *message){
 	clearArea(15,15,300,20);
 	writeTextAnimation(message,15,15,WHITE,50,2);
-}
-
-Player openShop(Player x){
-	int yas = 1;
-	sm = 1;
-	keypress = 'a';
-	clearArea(0,0,440,220);
-	writeTextAnimation("BUY A POTION? -500G",15,15,WHITE,50,0);
-	write_text("YES",50,50,WHITE,0);
-	write_text("NO",50,60,WHITE,0);
-	write_text(">",40,50,WHITE,0);
-
-	while(sm == 1){
-		keypress = (char)getch();
-		if(keypress == down_key){
-			clearArea(40,50,6,6);
-			write_text(">",40,60,WHITE,0);
-			yas = 0;
-		}
-
-		if(keypress == up_key){
-			clearArea(40,60,6,6);
-			write_text(">",40,50,WHITE,0);
-			yas = 1;
-		}
-
-		if(keypress == back){
-			clearArea(40,50,6,6);
-			write_text(">",40,60,WHITE,0);
-			yas = 0;	
-		}
-
-		if(keypress == okay && yas == 1){
-			if(x.cash >= 500){
-				x.cash -= 500;
-				x.pot ++;
-				writeTextAnimation("You bought a potion",100,100,WHITE,30,0);
-				delay(SLOW*2);
-				clearArea(100,100,200,200);
-			}else{
-				writeTextAnimation("Cash not enough",100,100,WHITE,30,0);
-				delay(SLOW*2);
-				clearArea(100,100,200,200);
-			}
-		}else if(keypress == okay && yas == 0){
-			sm = 0;
-		}
-	}
 }
 
 Player monsterAttack(Monster y,Player x){
@@ -332,8 +297,6 @@ Player encounterJCarter(Player x, Monster y, Monster z){
 
 	x = drawBattleBox(x,y);
 
-	x = openShop(x);
-
 	clearArea(0,0,440,220);
 	writeTextAnimation("The portal is near..,",30,30,WHITE,40,0);
 	delay(SLOW);
@@ -346,7 +309,7 @@ Player encounterJCarter(Player x, Monster y, Monster z){
 
 /*Encounter Randomizer*/
 int encounterRoll(){
-	int randy = rand() % 200 + 1;
+	int randy = rand() % 150 + 1;
 	return randy;
 }
 
@@ -375,11 +338,17 @@ void encountery(int x){
 
 Player playerPotion(Player x){
 	x.pot -= 1;
-	updateStatusbar("You recovered 50 HP!");
+	updateStatusbar("You recovered 50 HP/MP!");
 	x.hp += 50;
+	x.mp += 50;
 	if(x.hp > x.max_hp){
 		x.hp = x.max_hp;
 	}
+
+	if(x.mp > x.max_mp){
+		x.mp = x.max_mp;
+	}
+
 	return x;
 }
 
@@ -407,7 +376,7 @@ void drawStatus(Player a, Monster b){
 	write_text(str,219,125,WHITE,0);
 
 	sprintf(str,"%d",a.pot);
-	write_text(str,246,215,WHITE,0);
+	write_text(str,236,200,WHITE,0);
 }
 
 int main() {	
@@ -617,7 +586,7 @@ Player drawBattleBox(Player x, Monster y){
 	write_text("POTION", 248,175,WHITE,0);
 	
 
-	write_text("BASH 3MP",20,155,WHITE,3);
+	write_text("BASH     ",20,155,WHITE,3);
 	write_text("EXAB 69MP",20,175,WHITE,3);
 	write_text("CRAM 50MP",110,155,WHITE,3);
 	write_text("KEK 100MP",110,175,WHITE,3);
@@ -627,6 +596,7 @@ Player drawBattleBox(Player x, Monster y){
 	if(y.agi > x.agi){
 		x = monsterAttack(y,x);
 		delay(SLOW);
+		drawStatus(x,y);
 	}
 
 	if(x.hp == 0){
@@ -725,7 +695,9 @@ Player drawBattleBox(Player x, Monster y){
 			}else if(keypress == okay){
 				if(xmen == 0 && ymen == 0){
 					y = playerBash(x,y);
-					updateStatusbar("You Used BASH!");
+					if(succ == 1){
+						updateStatusbar("You Used BASH!");
+					}
 					clearArea(238,155,6,6);
 					clearArea(10,155,6,6);
 					clearArea(10,175,6,6);
@@ -738,13 +710,17 @@ Player drawBattleBox(Player x, Monster y){
 						clearArea(0,0,440,220);
 						bm2 = 0;
 						keypress = 'a';
+						x = getCash(x,y.cash);
 						return x;
 					}
 					keypress = 'a';
 					bm2 = 0;
 				}else if(xmen == 1 && ymen == 0){
 					y = playerCram(x,y);
-					updateStatusbar("You Used CRAM!");
+					if(succ == 1){
+						updateStatusbar("You Used CRAM!");
+						x = manaDown(x,50);
+					}
 					clearArea(238,155,6,6);
 					clearArea(10,155,6,6);
 					clearArea(10,175,6,6);
@@ -757,13 +733,17 @@ Player drawBattleBox(Player x, Monster y){
 						clearArea(0,0,440,220);
 						bm2 = 0;
 						keypress = 'a';
+						x = getCash(x,y.cash);
 						return x;
 					}
 					keypress = 'a';
 					bm2 = 0;
 				}else if(xmen == 0 && ymen == 1){
 					x = playerExcessiveAbsence(x);
-					updateStatusbar("You Recovered 50 percent HP!");
+					if(succ == 1){
+						updateStatusbar("You Recovered 50 percent HP!");
+						x = manaDown(x,69);
+					}
 					clearArea(238,155,6,6);
 					clearArea(10,155,6,6);
 					clearArea(10,175,6,6);
@@ -773,7 +753,10 @@ Player drawBattleBox(Player x, Monster y){
 					keypress = 'a';
 				}else if(xmen == 1 && ymen == 1){
 					y = playerKek(x,y);
-					updateStatusbar("You Used KEK!");
+					if(succ == 1){
+						updateStatusbar("You Used KEK!");
+						x = manaDown(x,100);
+					}
 					clearArea(238,155,6,6);
 					clearArea(10,155,6,6);
 					clearArea(10,175,6,6);
@@ -786,6 +769,7 @@ Player drawBattleBox(Player x, Monster y){
 						clearArea(0,0,440,220);
 						bm2 = 0;
 						keypress = 'a';
+						x = getCash(x,y.cash);
 						return x;
 					}
 					keypress = 'a';
@@ -819,10 +803,6 @@ Player drawBattleBox(Player x, Monster y){
 
 Monster playerBash(Player y, Monster x){
 	int dmg;
-	if(y.mp < 3){
-		updateStatusbar("Insufficient MP!");
-		return x;
-	}
 
 	dmg = (y.atk/2) + (y.mag/3) - (x.def/3);
 
@@ -834,6 +814,9 @@ Monster playerBash(Player y, Monster x){
 	if(x.hp < 0){
 		x.hp = 0;
 	}
+
+	succ = 1;
+
 	return x;
 }
 
@@ -851,6 +834,7 @@ Monster playerCram(Player y, Monster x){
 	if(x.hp < 0){
 		x.hp = 0;
 	}
+	succ = 1;
 	return x;
 }
 
@@ -865,6 +849,7 @@ Player playerExcessiveAbsence(Player y){
 	if(y.hp > y.max_hp){
 		y.hp = y.max_hp;
 	}
+	succ = 1;
 	return y;
 }
 
@@ -874,7 +859,7 @@ Monster playerKek(Player y, Monster x){
 		updateStatusbar("Insufficient MP!");
 		return x;
 	}
-	dmg = y.mag + y.atk - (x.def/10);
+	dmg = y.mag + (2 * y.atk);
 	if(dmg <= 0){
 		dmg = 1;
 	}
@@ -882,6 +867,7 @@ Monster playerKek(Player y, Monster x){
 	if(x.hp < 0){
 		x.hp = 0;
 	}
+	succ = 1;
 	return x;
 }
 
