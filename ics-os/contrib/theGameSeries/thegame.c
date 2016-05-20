@@ -469,12 +469,21 @@ void writeTextAnimation(char* text, int x, int y, int color, int maxWidth, int s
 
 void playGame(){
 	int g;
+	int num;
 	clearArea(0,0,440,220);
-	//playIntro();
+	playIntro();
+	clearArea(0,0,440,220);
 	me = initializeplayer();
-	g = encounterRoll();
-	encountery(g);
-	delay(SLOW * 10);
+	num = 1;
+	encounterMonster(me,piggy,num);
+	num = 2;
+	encounterMonster(me,glucose,num);
+	encounterEboy(me,eboy);
+	num = 3;
+	encounterMonster(me,lazertron,num);
+	encounterEmo(me,emo);
+	num = 4;
+	encounterMonster(me,kekman,num);
 	me = encounterJCarter(me,jcarter,jackie);
 	credits();
 }
@@ -642,6 +651,7 @@ Player drawBattleBox(Player x, Monster y){
 			}
 		}
 		write_text(">",10,155,WHITE,0);
+		heya:;
 		while(bm2 == 1){
 			keypress = (char)getch();
 			if(keypress == up_key && xmen == 0){
@@ -720,6 +730,10 @@ Player drawBattleBox(Player x, Monster y){
 					if(succ == 1){
 						updateStatusbar("You Used CRAM!");
 						x = manaDown(x,50);
+					}else{
+						bm2 = 0,
+						bm1 = 1;
+						goto heya;
 					}
 					clearArea(238,155,6,6);
 					clearArea(10,155,6,6);
@@ -822,7 +836,7 @@ Monster playerBash(Player y, Monster x){
 
 Monster playerCram(Player y, Monster x){
 	int dmg;
-	if(y.mp < 15){
+	if(y.mp < 50){
 		updateStatusbar("Insufficient MP!");
 		return x;
 	}
@@ -839,7 +853,7 @@ Monster playerCram(Player y, Monster x){
 }
 
 Player playerExcessiveAbsence(Player y){
-	if(y.mp < 20){
+	if(y.mp < 69){
 		updateStatusbar("Insufficient MP!");
 		return y;
 	}
@@ -855,7 +869,7 @@ Player playerExcessiveAbsence(Player y){
 
 Monster playerKek(Player y, Monster x){
 	int dmg;
-	if(y.mp < 25){
+	if(y.mp < 100){
 		updateStatusbar("Insufficient MP!");
 		return x;
 	}
